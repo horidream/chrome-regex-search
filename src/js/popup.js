@@ -327,12 +327,13 @@ function(tabs) {
     chrome.tabs.sendMessage(tabs[0].id, {
       'message' : 'getSearchInfo'
     }, function(response){
-      if (response) {
-        // Content script is active
-        console.log(response);
-      } else {
-        console.log(response);
+      if (chrome.runtime.lastError) {
+        // Handle the error case
+        console.log('Content script not loaded:', chrome.runtime.lastError.message);
         document.getElementById('error').textContent = ERROR_TEXT;
+      } else if (response) {
+        // Content script is active and responded
+        console.log('Content script response:', response);
       }
     });
   }

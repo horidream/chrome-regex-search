@@ -1,5 +1,5 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
 
   "name": "Chrome Regex Search",
   "description": "An extension for Regex Search in lieu of Chrome's CTRL+F",
@@ -15,7 +15,7 @@
     "128": "icons/icons_128.png",
     "256": "icons/icons_256.png"
   },
-  "browser_action": {
+  "action": {
     "default_icon": {
       "16": "icons/icons_16.png",
       "24": "icons/icons_24.png",
@@ -31,11 +31,12 @@
   },
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "scripting"
   ],
   "background": {
-    "scripts": ["js/background.js"],
-    "persistent": true
+    "service_worker": "js/background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -44,13 +45,14 @@
     }
   ],
   "commands": {
-    "_execute_browser_action": {
+    "_execute_action": {
       "suggested_key": {
         "windows": "Ctrl+Shift+F",
         "mac": "Command+Shift+F",
         "chromeos": "Ctrl+Shift+F",
         "linux": "Ctrl+Shift+F"
-      }
+      },
+      "description": "Open Regex Search"
     }
   },
   "options_page": "options.html"

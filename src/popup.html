@@ -2,118 +2,188 @@
 <html lang="en">
   <head>
     <title>Chrome Regex Search</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
     <style type="text/css">
-      a:link, a:visited {
-        display: block;
-        width: 2em;  
-        padding: 0.2em;
-        line-height: 1.6;
-        background-color: #f2f2f2;
-        border: 1px solid transparent;
-         border-color: #aaa;
-        color: #000;
-        text-decoration: bold;
-        text-align: center;
-        float: right;
-        -webkit-box-shadow: inset 0 0 30px #fff;
-        box-shadow: inset 0 0 30px #fff;
-        border-radius: 2px;
-        -webkit-text-stroke: 2px rgba(0,0,0,1);
-      }
-      a.selected {
-        background-color: #eaeaea;
-        color: #000;
-        -webkit-box-shadow: inset 0 3px 3px rgba(0, 0, 0, .125);
-               box-shadow: inset 0 3px 3px rgba(0, 0, 0, .125);
-      }
-      a:hover {
-        background-color: #dadada;
-        color: #000;
-       -webkit-box-shadow: inset 0 3px 3px rgba(0, 0, 0, .125);
-               box-shadow: inset 0 3px 3px rgba(0, 0, 0, .125);
-      }
-      #insensitive {
-        -webkit-text-stroke: 1px rgba(0,0,0,1);
-      }
-      #clear {
-        -webkit-text-stroke: 1px rgba(0,0,0,1);
-      }
-      #show-history {
-        -webkit-text-stroke: 0px;
-      }
-      .flexContainer {
-        position: relative;
-        text-align: right;
-        display: flex;
-      }
-      #inputRegex {
-        width: 22em;
-        border-radius: 2px;
-        padding-right: 5em;
-       -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, .125);
-               box-shadow: 0 1px 1px rgba(0, 0, 0, .125);
-      }
-      #numResults {
-        position: absolute;
-        top: 0.25em;
-        right: 14.5em;
-        min-width: 4em;
-        max-width: 5em;
-        overflow:auto;
-        white-space: nowrap;
-        height: 1.6;
-        font-size: 10pt;
-      }
-      #history {
-        margin: 4px 2px;
-        display: none;
-      }
-      .historyDeleteEntry {
-        color: #c00;
-        cursor: pointer;
-        margin-right: 4px;
-        font-size: 0.8em;
-      }
-      .historyLink {
-        color: #09d;
-        cursor: pointer;
-      }
-      .historyIsEmptyMessage {
-        font-style: italic;
-        color: #555;
-      }
-      
-      .clearHistoryButton {
-        color: #000; 
-        text-decoration: none;
-        float: left !important;
-        width: 7em !important;
-        -webkit-text-stroke: 0.5px rgba(0,0,0,1) !important;
-        margin-bottom: 0.2em;
+      :root {
+        --vscode-bg: #1e1e1e;
+        --vscode-input-bg: #3c3c3c;
+        --vscode-text: #cccccc;
+        --vscode-button-hover: #2a2d2e;
+        --vscode-border: #454545;
       }
 
       body {
-        background-color: #dddddd;
+        background-color: var(--vscode-bg);
+        color: var(--vscode-text);
+        margin: 0;
+        padding: 8px;
+        min-width: 400px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Ubuntu', 'Droid Sans', sans-serif;
       }
+
+      .search-container {
+        display: flex;
+        align-items: center;
+        background: var(--vscode-input-bg);
+        border: 1px solid var(--vscode-border);
+        border-radius: 4px;
+        padding: 4px 8px;
+        gap: 8px;
+      }
+
+      .search-label {
+        color: var(--vscode-text);
+        opacity: 0.7;
+        font-size: 13px;
+        user-select: none;
+      }
+
+      #inputRegex {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--vscode-text);
+        font-size: 13px;
+        outline: none;
+        min-width: 200px;
+        height: 24px;
+      }
+
+      .search-actions {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+
+      .action-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 3px;
+        border: none;
+        background: transparent;
+        color: var(--vscode-text);
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .action-button svg {
+        width: 14px;
+        height: 14px;
+        fill: currentColor;
+      }
+
+      .action-button:hover {
+        background: var(--vscode-button-hover);
+      }
+
+      .action-button.active {
+        background: var(--vscode-button-hover);
+      }
+
+      #numResults {
+        font-size: 12px;
+        opacity: 0.7;
+        margin-left: 8px;
+      }
+
+      #history {
+        margin-top: 8px;
+        border-top: 1px solid var(--vscode-border);
+        padding-top: 8px;
+        display: none;
+      }
+
+      .historyLink {
+        color: var(--vscode-text);
+        opacity: 0.8;
+        cursor: pointer;
+        display: block;
+        padding: 4px 0;
+        font-size: 12px;
+      }
+
+      .historyLink:hover {
+        opacity: 1;
+      }
+
+      .historyDeleteEntry {
+        color: #f14c4c;
+        cursor: pointer;
+        margin-right: 8px;
+        font-size: 12px;
+      }
+
+      .clearHistoryButton {
+        color: var(--vscode-text);
+        text-decoration: none;
+        font-size: 12px;
+        opacity: 0.7;
+        padding: 4px 8px;
+        border-radius: 3px;
+        margin-top: 8px;
+        display: inline-block;
+      }
+
+      .clearHistoryButton:hover {
+        background: var(--vscode-button-hover);
+        opacity: 1;
+      }
+
       .error-chrome-regex {
-        color: #FF0000;
+        color: #f14c4c;
+        font-size: 12px;
+        margin-top: 8px;
       }
     </style>
   </head>
   <body>
-    <div class="flexContainer">
-      <input id="inputRegex" type="text" name="inputRegex"></input><span id="numResults"></span>
-      <a href="#" id="prev" type="button" title="Previous Match"><i class="fa fa-angle-up"></i></a>
-      <a href="#" id="next" type="button" title="Next Match"><i class="fa fa-angle-down"></i></a>
-      <a href="#" id="insensitive" type="button" title="Case Insensitive"><i class="fa fa-info"></i></a>
-      <a href="#" id="copy-to-clipboard" type="button" title="Copy matches to clipboard"><i class="fa fa-copy"></i></a>
-      <a href="#" id="clear" type="button" title="Clear"><i class="fa fa-trash-o"></i></a>
-      <a href="#" class="selected" id="show-history" type="button" title="History"><i class="fa fa-history"></i></a>
+    <div class="search-container">
+      <span class="search-label">Find</span>
+      <input id="inputRegex" type="text" name="inputRegex" placeholder="Search">
+      <div class="search-actions">
+        <button class="action-button" id="insensitive" title="Match Case (Alt+C)">
+          <svg viewBox="0 0 16 16">
+            <path d="M5.37 12.374h-.88L2.33 6.26H2.3v6.114H1.36V5h1.11l2.16 6.114h.03L6.82 5h1.11v7.374h-.94V6.26h-.03l-2.16 6.114zm7.66-1.014a3.35 3.35 0 0 1-.91.421c-.35.112-.75.168-1.18.168-.5 0-.94-.079-1.32-.236a2.66 2.66 0 0 1-.97-.673 2.89 2.89 0 0 1-.6-1.048 4.37 4.37 0 0 1-.2-1.35c0-.47.066-.9.2-1.29.133-.39.329-.725.587-1.005a2.68 2.68 0 0 1 .94-.673c.373-.158.803-.236 1.29-.236.467 0 .87.056 1.21.168.34.112.63.264.87.456l-.34.81a2.416 2.416 0 0 0-.77-.388 2.829 2.829 0 0 0-.88-.13c-.333 0-.63.052-.89.157a1.793 1.793 0 0 0-.65.45 1.973 1.973 0 0 0-.41.704 2.87 2.87 0 0 0-.14.925c0 .347.047.66.14.936.093.277.23.51.41.704.18.193.4.342.66.446.26.104.557.157.89.157.187 0 .357-.015.51-.045.153-.03.293-.07.42-.123v-1.89h-1.17v-.84h2.17v3.37z"/>
+          </svg>
+        </button>
+        <button class="action-button" id="regex-mode" title="Use Regular Expression">
+          <svg viewBox="0 0 16 16">
+            <path d="M10.012 2h.976v3.113l2.56-1.557.486.885L11.47 6l2.564 1.559-.485.885-2.561-1.557V10h-.976V6.887l-2.56 1.557-.486-.885L9.53 6 6.966 4.441l.485-.885 2.561 1.557V2zM2 10h4v4H2v-4z"/>
+          </svg>
+        </button>
+        <button class="action-button" id="prev" title="Previous Match (Shift+Enter)">
+          <svg viewBox="0 0 16 16">
+            <path d="M3.5 7.5l4-4 .7.7L4.9 7.5l3.3 3.3-.7.7-4-4zm6 0l4-4 .7.7-3.3 3.3 3.3 3.3-.7.7-4-4z"/>
+          </svg>
+        </button>
+        <button class="action-button" id="next" title="Next Match (Enter)">
+          <svg viewBox="0 0 16 16">
+            <path d="M12.5 8.5l-4 4-.7-.7 3.3-3.3-3.3-3.3.7-.7 4 4zm-6 0l-4 4-.7-.7L5.1 8.5 1.8 5.2l.7-.7 4 4z"/>
+          </svg>
+        </button>
+        <button class="action-button" id="copy-to-clipboard" title="Copy Matches">
+          <svg viewBox="0 0 16 16">
+            <path d="M4 4h8v8H4z"/>
+            <path fill-rule="evenodd" d="M3 3h9v9H3V3zm1 1v7h7V4H4z"/>
+          </svg>
+        </button>
+        <button class="action-button" id="clear" title="Clear">
+          <svg viewBox="0 0 16 16">
+            <path d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z"/>
+          </svg>
+        </button>
+        <button class="action-button" id="show-history" title="Show Search History">
+          <svg viewBox="0 0 16 16">
+            <path d="M8 4h1v4H8V4zm0 5h1v1H8V9zm0-8a7 7 0 1 1-7 7 7 7 0 0 1 7-7zm0-1a8 8 0 1 0 8 8 8 8 0 0 0-8-8z"/>
+          </svg>
+        </button>
+        <span id="numResults"></span>
+      </div>
     </div>
-    <div id="history">
-    </div>
+    <div id="history"></div>
     <span id="error" class="error-chrome-regex"></span>
+    <script type="text/javascript" src="js/popup.js"></script>
   </body>
-  <script type="text/javascript" src="js/popup.js"></script>
 </html>
