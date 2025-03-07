@@ -30,8 +30,14 @@ Customizable settings
 <b>ENTER</b> : select next regex match on page
 <br />
 <b>SHIFT+ENTER</b> : select previous regex match on page
+<br />
+<b>ALT+C</b> : toggle case sensitivity
+<br />
+<b>ESC</b> : clear search
+<br />
+<b>CTRL+SHIFT+F</b> (Windows/Linux) or <b>CMD+SHIFT+F</b> (Mac) : toggle popup (open/close)
 
-<b>Instructions to set up a keyboard shortcut to open the popup:</b>
+<b>Instructions to set up a keyboard shortcut to open/close the popup:</b>
 <br />
 In your browser, go to chrome://extensions/shortcuts
 <br />
@@ -42,9 +48,6 @@ Click 'Keyboard Shortcuts'
 Type your custom command (ie CTRL+SHIFT+F)
 <br />
 Now whenever, you want to open the popup simply enter your custom command.
-
-
-
 
 ## License
 

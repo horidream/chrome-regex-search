@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <title>Chrome Regex Search</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style type="text/css">
       :root {
         --vscode-bg: #1e1e1e;
@@ -9,24 +10,38 @@
         --vscode-text: #cccccc;
         --vscode-button-hover: #2a2d2e;
         --vscode-border: #454545;
+        --popup-border-radius: 0;
       }
 
-      body {
+      html, body {
         background-color: var(--vscode-bg);
         color: var(--vscode-text);
         margin: 0;
-        padding: 8px;
-        min-width: 400px;
+        padding: 0;
+        min-width: 500px;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Ubuntu', 'Droid Sans', sans-serif;
+        border-radius: var(--popup-border-radius);
+        overflow: hidden;
+      }
+      
+      body {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--vscode-border);
+      }
+
+      .popup-container {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-radius: var(--popup-border-radius);
       }
 
       .search-container {
         display: flex;
         align-items: center;
         background: var(--vscode-input-bg);
-        border: 1px solid var(--vscode-border);
-        border-radius: 4px;
-        padding: 4px 8px;
+        border-bottom: 1px solid var(--vscode-border);
+        padding: 8px 12px;
         gap: 8px;
       }
 
@@ -47,6 +62,22 @@
         min-width: 200px;
         height: 24px;
       }
+      
+      #inputRegex:focus,
+      #inputRegex:active {
+        background: transparent !important;
+        outline: none;
+      }
+      
+      /* Style for valid input */
+      #inputRegex.valid {
+        background: transparent !important;
+      }
+      
+      /* Style for invalid input */
+      #inputRegex.invalid {
+        background-color: rgba(255, 137, 137, 0.3) !important;
+      }
 
       .search-actions {
         display: flex;
@@ -58,20 +89,19 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 24px;
-        height: 24px;
-        border-radius: 3px;
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
         border: none;
         background: transparent;
         color: var(--vscode-text);
         cursor: pointer;
         padding: 0;
+        transition: background-color 0.2s, color 0.2s;
       }
 
-      .action-button svg {
-        width: 14px;
-        height: 14px;
-        fill: currentColor;
+      .action-button i {
+        font-size: 14px;
       }
 
       .action-button:hover {
@@ -81,18 +111,27 @@
       .action-button.active {
         background: var(--vscode-button-hover);
       }
+      
+      /* Add selected class for insensitive button */
+      .action-button.selected {
+        background: var(--vscode-button-hover);
+        color: #ffffff;
+      }
 
       #numResults {
         font-size: 12px;
         opacity: 0.7;
+        min-width: 50px;
         margin-left: 8px;
       }
 
       #history {
-        margin-top: 8px;
+        margin: 0;
+        padding: 8px 12px;
         border-top: 1px solid var(--vscode-border);
-        padding-top: 8px;
         display: none;
+        max-height: 200px;
+        overflow-y: auto;
       }
 
       .historyLink {
@@ -100,8 +139,13 @@
         opacity: 0.8;
         cursor: pointer;
         display: block;
-        padding: 4px 0;
+        padding: 6px 0;
         font-size: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .historyLink:last-child {
+        border-bottom: none;
       }
 
       .historyLink:hover {
@@ -121,9 +165,10 @@
         font-size: 12px;
         opacity: 0.7;
         padding: 4px 8px;
-        border-radius: 3px;
+        border-radius: 4px;
         margin-top: 8px;
         display: inline-block;
+        transition: background-color 0.2s, opacity 0.2s;
       }
 
       .clearHistoryButton:hover {
@@ -134,56 +179,44 @@
       .error-chrome-regex {
         color: #f14c4c;
         font-size: 12px;
-        margin-top: 8px;
+        padding: 8px 12px;
+        margin: 0;
+        background-color: rgba(241, 76, 76, 0.1);
+        border-top: 1px solid var(--vscode-border);
+        display: none;
       }
     </style>
   </head>
   <body>
-    <div class="search-container">
-      <span class="search-label">Find</span>
-      <input id="inputRegex" type="text" name="inputRegex" placeholder="Search">
-      <div class="search-actions">
-        <button class="action-button" id="insensitive" title="Match Case (Alt+C)">
-          <svg viewBox="0 0 16 16">
-            <path d="M5.37 12.374h-.88L2.33 6.26H2.3v6.114H1.36V5h1.11l2.16 6.114h.03L6.82 5h1.11v7.374h-.94V6.26h-.03l-2.16 6.114zm7.66-1.014a3.35 3.35 0 0 1-.91.421c-.35.112-.75.168-1.18.168-.5 0-.94-.079-1.32-.236a2.66 2.66 0 0 1-.97-.673 2.89 2.89 0 0 1-.6-1.048 4.37 4.37 0 0 1-.2-1.35c0-.47.066-.9.2-1.29.133-.39.329-.725.587-1.005a2.68 2.68 0 0 1 .94-.673c.373-.158.803-.236 1.29-.236.467 0 .87.056 1.21.168.34.112.63.264.87.456l-.34.81a2.416 2.416 0 0 0-.77-.388 2.829 2.829 0 0 0-.88-.13c-.333 0-.63.052-.89.157a1.793 1.793 0 0 0-.65.45 1.973 1.973 0 0 0-.41.704 2.87 2.87 0 0 0-.14.925c0 .347.047.66.14.936.093.277.23.51.41.704.18.193.4.342.66.446.26.104.557.157.89.157.187 0 .357-.015.51-.045.153-.03.293-.07.42-.123v-1.89h-1.17v-.84h2.17v3.37z"/>
-          </svg>
-        </button>
-        <button class="action-button" id="regex-mode" title="Use Regular Expression">
-          <svg viewBox="0 0 16 16">
-            <path d="M10.012 2h.976v3.113l2.56-1.557.486.885L11.47 6l2.564 1.559-.485.885-2.561-1.557V10h-.976V6.887l-2.56 1.557-.486-.885L9.53 6 6.966 4.441l.485-.885 2.561 1.557V2zM2 10h4v4H2v-4z"/>
-          </svg>
-        </button>
-        <button class="action-button" id="prev" title="Previous Match (Shift+Enter)">
-          <svg viewBox="0 0 16 16">
-            <path d="M3.5 7.5l4-4 .7.7L4.9 7.5l3.3 3.3-.7.7-4-4zm6 0l4-4 .7.7-3.3 3.3 3.3 3.3-.7.7-4-4z"/>
-          </svg>
-        </button>
-        <button class="action-button" id="next" title="Next Match (Enter)">
-          <svg viewBox="0 0 16 16">
-            <path d="M12.5 8.5l-4 4-.7-.7 3.3-3.3-3.3-3.3.7-.7 4 4zm-6 0l-4 4-.7-.7L5.1 8.5 1.8 5.2l.7-.7 4 4z"/>
-          </svg>
-        </button>
-        <button class="action-button" id="copy-to-clipboard" title="Copy Matches">
-          <svg viewBox="0 0 16 16">
-            <path d="M4 4h8v8H4z"/>
-            <path fill-rule="evenodd" d="M3 3h9v9H3V3zm1 1v7h7V4H4z"/>
-          </svg>
-        </button>
-        <button class="action-button" id="clear" title="Clear">
-          <svg viewBox="0 0 16 16">
-            <path d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z"/>
-          </svg>
-        </button>
-        <button class="action-button" id="show-history" title="Show Search History">
-          <svg viewBox="0 0 16 16">
-            <path d="M8 4h1v4H8V4zm0 5h1v1H8V9zm0-8a7 7 0 1 1-7 7 7 7 0 0 1 7-7zm0-1a8 8 0 1 0 8 8 8 8 0 0 0-8-8z"/>
-          </svg>
-        </button>
-        <span id="numResults"></span>
+    <div class="popup-container">
+      <div class="search-container">
+        <span class="search-label">Find</span>
+        <input id="inputRegex" type="text" name="inputRegex" placeholder="Search">
+        <div class="search-actions">
+          <button class="action-button" id="insensitive" title="Match Case (Alt+C)">
+            <i class="fa-solid fa-text-height"></i>
+          </button>
+          <button class="action-button" id="prev" title="Previous Match (Shift+Enter)">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <button class="action-button" id="next" title="Next Match (Enter)">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+          <button class="action-button" id="copy-to-clipboard" title="Copy Matches">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+          <button class="action-button" id="clear" title="Clear (Esc)">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <button class="action-button" id="show-history" title="Show Search History">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </button>
+          <span id="numResults"></span>
+        </div>
       </div>
+      <div id="history"></div>
+      <span id="error" class="error-chrome-regex"></span>
     </div>
-    <div id="history"></div>
-    <span id="error" class="error-chrome-regex"></span>
     <script type="text/javascript" src="js/popup.js"></script>
   </body>
 </html>

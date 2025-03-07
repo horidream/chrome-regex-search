@@ -1,7 +1,7 @@
 /*** CONSTANTS ***/
 var DEFAULT_INSTANT_RESULTS = true;
 var ERROR_COLOR = '#ff8989';
-var WHITE_COLOR = '#ffffff';
+var WHITE_COLOR = 'transparent';
 var ERROR_TEXT = "Content script was not loaded. Are you currently in the Chrome Web Store or in a chrome:// page? If you are, content scripts won't work here. If not, please wait for the page to finish loading or refresh the page.";
 var SHOW_HISTORY_TITLE = "Show search history";
 var HIDE_HISTORY_TITLE = "Hide search history";
@@ -69,11 +69,16 @@ function passInputToContentScript(){
 function passInputToContentScript(configurationChanged){
   if (!processingKey) {
     var regexString = document.getElementById('inputRegex').value;
-    if  (!isValidRegex(regexString)) {
-      document.getElementById('inputRegex').style.backgroundColor = ERROR_COLOR;
+    var inputElement = document.getElementById('inputRegex');
+    
+    if (!isValidRegex(regexString)) {
+      inputElement.classList.remove('valid');
+      inputElement.classList.add('invalid');
     } else {
-      document.getElementById('inputRegex').style.backgroundColor = WHITE_COLOR;
+      inputElement.classList.remove('invalid');
+      inputElement.classList.add('valid');
     }
+    
     chrome.tabs.query(
       { 'active': true, 'currentWindow': true },
       function(tabs) {
@@ -167,9 +172,9 @@ function setHistoryVisibility(makeVisible) {
   document.getElementById('history').style.display = makeVisible ? 'block' : 'none';
   document.getElementById('show-history').title = makeVisible ? HIDE_HISTORY_TITLE : SHOW_HISTORY_TITLE;
   if(makeVisible) {
-    document.getElementById('show-history').className = 'selected';
+    document.getElementById('show-history').className = 'action-button selected';
   } else {
-    document.getElementById('show-history').className = '';
+    document.getElementById('show-history').className = 'action-button';
   }
 }
 
@@ -178,20 +183,20 @@ function setCaseInsensitiveElement() {
   function (result) {
     document.getElementById('insensitive').title = result.caseInsensitive ? DISABLE_CASE_INSENSITIVE_TITLE : ENABLE_CASE_INSENSITIVE_TITLE;
     if(result.caseInsensitive) {
-      document.getElementById('insensitive').className = 'selected';
+      document.getElementById('insensitive').className = 'action-button selected';
     } else {
-      document.getElementById('insensitive').className = '';
+      document.getElementById('insensitive').className = 'action-button';
     }
   });
 
 }
 function toggleCaseInsensitive() {
-  var caseInsensitive = document.getElementById('insensitive').className == 'selected';
+  var caseInsensitive = document.getElementById('insensitive').className.includes('selected');
   document.getElementById('insensitive').title = caseInsensitive ? ENABLE_CASE_INSENSITIVE_TITLE : DISABLE_CASE_INSENSITIVE_TITLE;
   if(caseInsensitive) {
-    document.getElementById('insensitive').className = '';
+    document.getElementById('insensitive').className = 'action-button';
   } else {
-    document.getElementById('insensitive').className = 'selected';
+    document.getElementById('insensitive').className = 'action-button selected';
   }
   sentInput = false;
   chrome.storage.local.set({caseInsensitive: !caseInsensitive});
@@ -204,6 +209,31 @@ function clearSearchHistory() {
   updateHistoryDiv();
 }
 
+// Function to clear search and remove highlights
+function clearSearch() {
+  sentInput = false;
+  var inputElement = document.getElementById('inputRegex');
+  inputElement.value = '';
+  inputElement.classList.remove('invalid');
+  inputElement.classList.remove('valid');
+  
+  // Send empty search to content script to clear highlights
+  chrome.tabs.query(
+    { 'active': true, 'currentWindow': true },
+    function(tabs) {
+      if ('undefined' != typeof tabs[0].id && tabs[0].id) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          'message': 'search',
+          'regexString': '',
+          'configurationChanged': true,
+          'getNext': false
+        });
+      }
+    }
+  );
+  
+  inputElement.focus();
+}
 
 /*** LISTENERS ***/
 document.getElementById('next').addEventListener('click', function() {
@@ -215,10 +245,7 @@ document.getElementById('prev').addEventListener('click', function() {
 });
 
 document.getElementById('clear').addEventListener('click', function() {
-  sentInput = false;
-  document.getElementById('inputRegex').value = '';
-  passInputToContentScript();
-  document.getElementById('inputRegex').focus();
+  clearSearch();
 });
 
 document.getElementById('show-history').addEventListener('click', function() {
@@ -272,6 +299,35 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 var map = [];
 onkeydown = onkeyup = function(e) {
     map[e.keyCode] = e.type == 'keydown';
+    
+    // If Escape key is pressed, clear the search
+    if (e.type == 'keydown' && e.keyCode == 27) { // ESC key
+      if(e.ctrlKey) {
+        console.log("ESC key pressed, clearing search");
+        clearSearch();
+        e.preventDefault(); // Prevent default ESC behavior
+        return;
+      } else {
+        window.close(); // Close the popup
+		    e.preventDefault();
+		    return;
+      }
+    }
+    
+    // If Cmd+Shift+F (Mac) or Ctrl+Shift+F (Windows/Linux) is pressed, close the popup
+    if (e.type == 'keydown' && e.keyCode == 70 && e.shiftKey && (e.metaKey || e.ctrlKey)) { // F key with Shift and (Cmd or Ctrl)
+      console.log("Cmd/Ctrl+Shift+F pressed, closing popup");
+      window.close(); // Close the popup
+      e.preventDefault();
+      return;
+    }
+    
+    // If Alt+C is pressed, toggle case sensitivity
+    if (map[18] && map[67]) { // ALT + C
+      toggleCaseInsensitive();
+      return;
+    }
+    
     if (document.getElementById('inputRegex') === document.activeElement) { //input element is in focus
       if (!map[16] && map[13]) { //ENTER
         if (sentInput) {
@@ -330,7 +386,9 @@ function(tabs) {
       if (chrome.runtime.lastError) {
         // Handle the error case
         console.log('Content script not loaded:', chrome.runtime.lastError.message);
-        document.getElementById('error').textContent = ERROR_TEXT;
+        var errorElement = document.getElementById('error');
+        errorElement.textContent = ERROR_TEXT;
+        errorElement.style.display = 'block';
       } else if (response) {
         // Content script is active and responded
         console.log('Content script response:', response);
