@@ -136,6 +136,7 @@
 
       .historyLink {
         color: var(--vscode-text);
+        flex: 1;
         opacity: 0.8;
         cursor: pointer;
         display: block;
@@ -167,13 +168,20 @@
         padding: 4px 8px;
         border-radius: 4px;
         margin-top: 8px;
-        display: inline-block;
+        display: block;
+        float: right;
         transition: background-color 0.2s, opacity 0.2s;
       }
 
       .clearHistoryButton:hover {
         background: var(--vscode-button-hover);
         opacity: 1;
+      }
+
+      .historyLine {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
       }
 
       .error-chrome-regex {

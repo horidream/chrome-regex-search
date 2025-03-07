@@ -121,8 +121,9 @@ function createHistoryLineElement(text) {
     }
   });
   var lineDiv = document.createElement('div');
-  lineDiv.appendChild(deleteEntrySpan);
+  lineDiv.className = 'historyLine';
   lineDiv.appendChild(linkSpan);
+  lineDiv.appendChild(deleteEntrySpan);
   return lineDiv;
 }
 
@@ -308,6 +309,7 @@ onkeydown = onkeyup = function(e) {
         e.preventDefault(); // Prevent default ESC behavior
         return;
       } else {
+        clearSearch();
         window.close(); // Close the popup
 		    e.preventDefault();
 		    return;
@@ -317,6 +319,7 @@ onkeydown = onkeyup = function(e) {
     // If Cmd+Shift+F (Mac) or Ctrl+Shift+F (Windows/Linux) is pressed, close the popup
     if (e.type == 'keydown' && e.keyCode == 70 && e.shiftKey && (e.metaKey || e.ctrlKey)) { // F key with Shift and (Cmd or Ctrl)
       console.log("Cmd/Ctrl+Shift+F pressed, closing popup");
+      clearSearch();
       window.close(); // Close the popup
       e.preventDefault();
       return;
